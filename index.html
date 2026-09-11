@@ -291,27 +291,37 @@ function updateResult(categories) {
     (eyeLeft + eyeRight) / 2;
 
   const mouthScore =
-  clamp(Math.round((mouthRaw - 0.20) * 125), 0, 100);
+  clamp(Math.round((mouthRaw - 0.15) * 120), 0, 100);
 
 const eyeScore =
-  clamp(Math.round((eyeRaw - 0.15) * 135), 0, 100);
-  
-  const difference =
-    Math.abs(smileLeft - smileRight);
+  clamp(Math.round((eyeRaw - 0.10) * 120), 0, 100);
 
-  const balanceScore =
-    clamp(Math.round(100 - difference * 150), 0, 100);
+const difference =
+  Math.abs(smileLeft - smileRight);
 
-  let total =
-    mouthScore * 0.45 +
-    eyeScore * 0.35 +
-    balanceScore * 0.20;
-  if (total > 95) {
-  total = 95 + Math.round((total - 95) * 0.4);
+const balanceScore =
+  clamp(Math.round(100 - difference * 200), 0, 100);
+
+// 笑顔そのものが弱い場合、左右バランスは加点しない
+let total =
+  mouthScore * 0.60 +
+  eyeScore * 0.30;
+
+if (mouthScore >= 40) {
+  total += balanceScore * 0.10;
 }
 
-  total = clamp(Math.round(total), 0, 100);
+// 100点は「口角・目元・左右バランス」が
+// 全部かなり優秀な場合だけ
+if (
+  mouthScore < 95 ||
+  eyeScore < 85 ||
+  balanceScore < 90
+) {
+  total = Math.min(total, 99);
+}
 
+total = clamp(Math.round(total), 0, 100);
   scoreEl.textContent = total + "点";
 
   mouthValue.textContent = mouthScore;
