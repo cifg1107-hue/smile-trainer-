@@ -267,7 +267,7 @@ async function createFaceLandmarker() {
     }
   );
 
-  statusEl.textContent = "準備OK！笑ってみてください 😊";
+  statusEl.textContent = "準備OK！笑ってみてください！";
 }
 
 function updateResult(categories) {
@@ -302,7 +302,7 @@ const difference =
 const balanceScore =
   clamp(Math.round(100 - difference * 200), 0, 100);
 
-// 笑顔そのものが弱い場合、左右バランスは加点しない
+// 笑顔が弱いときは左右バランスを加点しない
 let total =
   mouthScore * 0.60 +
   eyeScore * 0.30;
@@ -311,8 +311,7 @@ if (mouthScore >= 40) {
   total += balanceScore * 0.10;
 }
 
-// 100点は「口角・目元・左右バランス」が
-// 全部かなり優秀な場合だけ
+// 100点は3項目すべてが非常に高い場合だけ
 if (
   mouthScore < 95 ||
   eyeScore < 85 ||
@@ -334,11 +333,11 @@ total = clamp(Math.round(total), 0, 100);
 
   if (total >= 90) {
 
-    rankEl.textContent = "✨ とても素敵な接客笑顔！";
+    rankEl.textContent = "㊗️ とても素敵な接客笑顔！";
 
   } else if (total >= 80) {
 
-    rankEl.textContent = "😊 とても良い笑顔";
+    rankEl.textContent = "❤️ とても良い笑顔";
 
   } else if (total >= 70) {
 
