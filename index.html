@@ -291,10 +291,10 @@ function updateResult(categories) {
     (eyeLeft + eyeRight) / 2;
 
   const mouthScore =
-    clamp(Math.round(mouthRaw * 135), 0, 100);
+  clamp(Math.round(mouthRaw * 90), 0, 100);
 
-  const eyeScore =
-    clamp(Math.round(eyeRaw * 155), 0, 100);
+const eyeScore =
+  clamp(Math.round(eyeRaw * 100), 0, 100);
 
   const difference =
     Math.abs(smileLeft - smileRight);
@@ -303,9 +303,9 @@ function updateResult(categories) {
     clamp(Math.round(100 - difference * 150), 0, 100);
 
   let total =
-    mouthScore * 0.70 +
-    eyeScore * 0.20 +
-    balanceScore * 0.10;
+    mouthScore * 0.50 +
+    eyeScore * 0.30 +
+    balanceScore * 0.20;
 
   total = clamp(Math.round(total), 0, 100);
 
