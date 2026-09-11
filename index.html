@@ -141,9 +141,9 @@
 
 <div class="container">
 
-  <h1>😊 笑顔トレーナー</h1>
+  <h1> 笑顔トレーナー</h1>
   <div class="subtitle">
-    接客にぴったりの笑顔を練習しよう
+    接客にぴったりの笑顔してしよう
   </div>
 
   <button id="startButton">カメラを起動</button>
@@ -162,7 +162,7 @@
 
     <div class="meter">
       <div class="meter-row">
-        <span>😊 口角</span>
+        <span> 口角</span>
         <span id="mouthValue">--</span>
       </div>
       <div class="bar-bg">
@@ -172,12 +172,307 @@
 
     <div class="meter">
       <div class="meter-row">
-        <span>👀 目元</span>
+        <span> 目元</span>
         <span id="eyeValue">--</span>
       </div>
       <div class="bar-bg">
         <div id="eyeBar" class="bar"></div>
       </div>
     </div>
+    <div class="meter">
+      <div class="meter-row">
+        <span>↔️ 左右バランス</span>
+        <span id="balanceValue">--</span>
+      </div>
+      <div class="bar-bg">
+        <div id="balanceBar" class="bar"></div>
+      </div>
+    </div>
 
-    <div
+    <div id="advice">
+      笑顔を作ると、ここにアドバイスが表示されます。
+    </div>
+
+    <div id="status"></div>
+
+  </div>
+
+  <div class="note">
+    ※この点数は接客練習用の独自指標です。<br>
+    医学的・心理学的な評価ではありません。<br>
+    カメラ映像はこのページ上で処理し、保存しません。
+  </div>
+
+</div>
+
+<script type="module">
+
+import {
+  FaceLandmarker,
+  FilesetResolver
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
+
+const video = document.getElementById("video");
+const startButton = document.getElementById("startButton");
+
+const scoreEl = document.getElementById("score");
+const rankEl = document.getElementById("rank");
+const statusEl = document.getElementById("status");
+const adviceEl = document.getElementById("advice");
+
+const mouthValue = document.getElementById("mouthValue");
+const eyeValue = document.getElementById("eyeValue");
+const balanceValue = document.getElementById("balanceValue");
+
+const mouthBar = document.getElementById("mouthBar");
+const eyeBar = document.getElementById("eyeBar");
+const balanceBar = document.getElementById("balanceBar");
+
+let faceLandmarker = null;
+let lastVideoTime = -1;
+let running = false;
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getBlendshape(categories, name) {
+  const item = categories.find(
+    category => category.categoryName === name
+  );
+
+  return item ? item.score : 0;
+}
+
+async function createFaceLandmarker() {
+
+  statusEl.textContent = "笑顔判定AIを準備しています…";
+
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+
+  faceLandmarker = await FaceLandmarker.createFromOptions(
+    vision,
+    {
+      baseOptions: {
+        modelAssetPath:
+          "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+      },
+
+      runningMode: "VIDEO",
+      numFaces: 1,
+      outputFaceBlendshapes: true
+    }
+  );
+
+  statusEl.textContent = "準備OK！笑ってみてください 😊";
+}
+
+function updateResult(categories) {
+
+  const smileLeft =
+    getBlendshape(categories, "mouthSmileLeft");
+
+  const smileRight =
+    getBlendshape(categories, "mouthSmileRight");
+
+  const eyeLeft =
+    getBlendshape(categories, "eyeSquintLeft");
+
+  const eyeRight =
+    getBlendshape(categories, "eyeSquintRight");
+
+  const mouthRaw =
+    (smileLeft + smileRight) / 2;
+
+  const eyeRaw =
+    (eyeLeft + eyeRight) / 2;
+
+  const mouthScore =
+    clamp(Math.round(mouthRaw * 135), 0, 100);
+
+  const eyeScore =
+    clamp(Math.round(eyeRaw * 155), 0, 100);
+
+  const difference =
+    Math.abs(smileLeft - smileRight);
+
+  const balanceScore =
+    clamp(Math.round(100 - difference * 150), 0, 100);
+
+  let total =
+    mouthScore * 0.70 +
+    eyeScore * 0.20 +
+    balanceScore * 0.10;
+
+  total = clamp(Math.round(total), 0, 100);
+
+  scoreEl.textContent = total + "点";
+
+  mouthValue.textContent = mouthScore;
+  eyeValue.textContent = eyeScore;
+  balanceValue.textContent = balanceScore;
+
+  mouthBar.style.width = mouthScore + "%";
+  eyeBar.style.width = eyeScore + "%";
+  balanceBar.style.width = balanceScore + "%";
+
+  if (total >= 90) {
+
+    rankEl.textContent = "✨ とても素敵な接客笑顔！";
+
+  } else if (total >= 80) {
+
+    rankEl.textContent = "😊 とても良い笑顔";
+
+  } else if (total >= 70) {
+
+    rankEl.textContent = "🙂 良い笑顔";
+
+  } else if (total >= 55) {
+
+    rankEl.textContent = "もう少し！";
+
+  } else {
+
+    rankEl.textContent = "笑顔を作ってみよう";
+  }
+
+  if (mouthScore < 55) {
+
+    adviceEl.textContent =
+      "💡 もう少し口角を上げてみましょう。";
+
+  } else if (eyeScore < 45) {
+
+    adviceEl.textContent =
+      "💡 口元はいい感じ！目元も少しやわらかくすると、より自然な印象です。";
+
+  } else if (balanceScore < 70) {
+
+    adviceEl.textContent =
+      "💡 とても良い笑顔です。左右の口角を同じくらい上げる意識をしてみましょう。";
+
+  } else if (total >= 90) {
+
+    adviceEl.textContent =
+      "🏆 接客のお手本レベル！その笑顔をキープ！";
+
+  } else if (total >= 80) {
+
+    adviceEl.textContent =
+      "✨ 接客にとても良い笑顔です！";
+
+  } else {
+
+    adviceEl.textContent =
+      "👍 いい感じ！そのまま少し口角と目元を意識してみましょう。";
+  }
+}
+
+async function predict() {
+
+  if (!running || !faceLandmarker) {
+    return;
+  }
+
+  if (
+    video.readyState >= 2 &&
+    video.currentTime !== lastVideoTime
+  ) {
+
+    lastVideoTime = video.currentTime;
+
+    const results =
+      faceLandmarker.detectForVideo(
+        video,
+        performance.now()
+      );
+
+    if (
+      results.faceBlendshapes &&
+      results.faceBlendshapes.length > 0
+    ) {
+
+      const categories =
+        results.faceBlendshapes[0].categories;
+
+      updateResult(categories);
+
+      statusEl.textContent =
+        "顔を認識しています";
+
+    } else {
+
+      scoreEl.textContent = "--";
+
+      rankEl.textContent =
+        "顔をカメラの中央に映してください";
+
+      statusEl.textContent =
+        "顔を探しています…";
+    }
+  }
+
+  requestAnimationFrame(predict);
+}
+
+startButton.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      startButton.disabled = true;
+      startButton.textContent =
+        "準備しています…";
+
+      if (!faceLandmarker) {
+        await createFaceLandmarker();
+      }
+
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 720 },
+            height: { ideal: 1280 }
+          },
+          audio: false
+        });
+
+      video.srcObject = stream;
+
+      await video.play();
+
+      running = true;
+
+      startButton.textContent =
+        "カメラ起動中";
+
+      statusEl.textContent =
+        "笑ってみてください 😊";
+
+      predict();
+
+    } catch (error) {
+
+      console.error(error);
+
+      startButton.disabled = false;
+
+      startButton.textContent =
+        "もう一度カメラを起動";
+
+      statusEl.textContent =
+        "エラーが発生しました。カメラの許可を確認してください。";
+    }
+  }
+);
+
+</script>
+
+</body>
+</html>
+    
