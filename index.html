@@ -206,11 +206,12 @@
 </div>
 
 <script type="module">
+import vision from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
-import {
+const {
   FaceLandmarker,
   FilesetResolver
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm";
+} = vision;
 
 const video = document.getElementById("video");
 const startButton = document.getElementById("startButton");
