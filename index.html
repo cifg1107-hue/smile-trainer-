@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>笑顔トレーナー</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    video {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 16px;
+      margin-top: 20px;
+    }
+    button {
+      font-size: 20px;
+      padding: 14px 24px;
+      margin-top: 20px;
+      border-radius: 12px;
+    }
+    #score {
+      font-size: 48px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>😊 笑顔トレーナー</h1>
+  <p>カメラに向かって笑顔を作ってみてください</p>
+
+  <button id="startButton">カメラを起動</button>
+
+  <video id="video" autoplay playsinline></video>
+
+  <div id="score">-- 点</div>
+
+  <script>
+    const video = document.getElementById("video");
+    const startButton = document.getElementById("startButton");
+    const score = document.getElementById("score");
+
+    startButton.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+          audio: false
+        });
+
+        video.srcObject = stream;
+
+        score.textContent = "カメラ起動OK";
+      } catch (error) {
+        score.textContent = "カメラを許可してください";
+      }
+    });
+  </script>
+
+</body>
+</html>
